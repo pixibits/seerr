@@ -5344,6 +5344,13 @@ paths:
             type: string
             example: 2023-01-01
         - in: query
+          name: movieReleaseMode
+          schema:
+            type: string
+            enum: [theatrical, home]
+            example: home
+          description: For movie discovery, use theatrical release dates or at-home digital/physical release dates
+        - in: query
           name: withRuntimeGte
           schema:
             type: number

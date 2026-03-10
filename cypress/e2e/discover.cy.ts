@@ -35,6 +35,21 @@ describe('Discover', () => {
     clickFirstTitleCardInSlider('Popular Movies');
   });
 
+  it('can switch movie discover filters to home releases', () => {
+    cy.intercept('GET', '/api/v1/discover/movies?page=1*').as(
+      'getDiscoverMovies'
+    );
+    cy.visit('/discover/movies');
+    cy.wait('@getDiscoverMovies');
+
+    cy.contains('button', '0 Active Filters').click();
+    cy.get('[data-testid=movie-release-mode-select]').select('home');
+
+    cy.wait('@getDiscoverMovies')
+      .its('request.url')
+      .should('include', 'movieReleaseMode=home');
+  });
+
   it('loads upcoming movies', () => {
     cy.intercept('/api/v1/discover/movies?page=1&primaryReleaseDateGte*').as(
       'getUpcomingMovies'
@@ -49,6 +64,15 @@ describe('Discover', () => {
     cy.visit('/');
     cy.wait('@getPopularTv');
     clickFirstTitleCardInSlider('Popular Series');
+  });
+
+  it('does not show movie release mode on series filters', () => {
+    cy.intercept('GET', '/api/v1/discover/tv?page=1*').as('getDiscoverTv');
+    cy.visit('/discover/tv');
+    cy.wait('@getDiscoverTv');
+
+    cy.contains('button', '0 Active Filters').click();
+    cy.get('[data-testid=movie-release-mode-select]').should('not.exist');
   });
 
   it('loads upcoming series', () => {

@@ -77,6 +77,8 @@ interface DiscoverMovieOptions {
   language?: string;
   primaryReleaseDateGte?: string;
   primaryReleaseDateLte?: string;
+  releaseDateGte?: string;
+  releaseDateLte?: string;
   withRuntimeGte?: string;
   withRuntimeLte?: string;
   voteAverageGte?: string;
@@ -95,6 +97,7 @@ interface DiscoverMovieOptions {
   certificationGte?: string;
   certificationLte?: string;
   certificationCountry?: string;
+  withReleaseType?: string;
 }
 
 interface DiscoverTvOptions {
@@ -495,6 +498,8 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
     language = this.locale,
     primaryReleaseDateGte,
     primaryReleaseDateLte,
+    releaseDateGte,
+    releaseDateLte,
     originalLanguage,
     genre,
     studio,
@@ -512,6 +517,7 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
     certificationGte,
     certificationLte,
     certificationCountry,
+    withReleaseType,
   }: DiscoverMovieOptions = {}): Promise<TmdbSearchMovieResponse> => {
     try {
       const defaultFutureDate = new Date(
@@ -523,6 +529,18 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
       const defaultPastDate = new Date('1900-01-01')
         .toISOString()
         .split('T')[0];
+      const activeReleaseDateGte = withReleaseType
+        ? releaseDateGte
+        : primaryReleaseDateGte;
+      const activeReleaseDateLte = withReleaseType
+        ? releaseDateLte
+        : primaryReleaseDateLte;
+      const releaseDateGteKey = withReleaseType
+        ? 'release_date.gte'
+        : 'primary_release_date.gte';
+      const releaseDateLteKey = withReleaseType
+        ? 'release_date.lte'
+        : 'primary_release_date.lte';
 
       const data = await this.get<TmdbSearchMovieResponse>('/discover/movie', {
         params: {
@@ -540,14 +558,14 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
                 : this.originalLanguage,
           // Set our release date values, but check if one is set and not the other,
           // so we can force a past date or a future date. TMDB Requires both values if one is set!
-          'primary_release_date.gte':
-            !primaryReleaseDateGte && primaryReleaseDateLte
+          [releaseDateGteKey]:
+            !activeReleaseDateGte && activeReleaseDateLte
               ? defaultPastDate
-              : primaryReleaseDateGte,
-          'primary_release_date.lte':
-            !primaryReleaseDateLte && primaryReleaseDateGte
+              : activeReleaseDateGte,
+          [releaseDateLteKey]:
+            !activeReleaseDateLte && activeReleaseDateGte
               ? defaultFutureDate
-              : primaryReleaseDateLte,
+              : activeReleaseDateLte,
           with_genres: genre,
           with_companies: studio,
           with_keywords: keywords,
@@ -564,6 +582,7 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
           'certification.gte': certificationGte,
           'certification.lte': certificationLte,
           certification_country: certificationCountry,
+          with_release_type: withReleaseType,
         },
       });
 

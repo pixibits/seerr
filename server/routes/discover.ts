@@ -56,6 +56,7 @@ const QueryFilterOptions = z.object({
   sortBy: z.coerce.string().optional(),
   primaryReleaseDateGte: z.coerce.string().optional(),
   primaryReleaseDateLte: z.coerce.string().optional(),
+  movieReleaseMode: z.enum(['theatrical', 'home']).optional(),
   firstAirDateGte: z.coerce.string().optional(),
   firstAirDateLte: z.coerce.string().optional(),
   studio: z.coerce.string().optional(),
@@ -85,6 +86,9 @@ const ApiQuerySchema = QueryFilterOptions.omit({
   certificationMode: true,
 });
 
+const formatDateString = (date?: string): string | undefined =>
+  date ? new Date(date).toISOString().split('T')[0] : undefined;
+
 discoverRoutes.get('/movies', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
 
@@ -92,6 +96,9 @@ discoverRoutes.get('/movies', async (req, res, next) => {
     const query = ApiQuerySchema.parse(req.query);
     const keywords = query.keywords;
     const excludeKeywords = query.excludeKeywords;
+    const primaryReleaseDateGte = formatDateString(query.primaryReleaseDateGte);
+    const primaryReleaseDateLte = formatDateString(query.primaryReleaseDateLte);
+    const useHomeReleaseDates = query.movieReleaseMode === 'home';
 
     const data = await tmdb.getDiscoverMovies({
       page: Number(query.page),
@@ -100,12 +107,15 @@ discoverRoutes.get('/movies', async (req, res, next) => {
       originalLanguage: query.language,
       genre: query.genre,
       studio: query.studio,
-      primaryReleaseDateLte: query.primaryReleaseDateLte
-        ? new Date(query.primaryReleaseDateLte).toISOString().split('T')[0]
-        : undefined,
-      primaryReleaseDateGte: query.primaryReleaseDateGte
-        ? new Date(query.primaryReleaseDateGte).toISOString().split('T')[0]
-        : undefined,
+      primaryReleaseDateLte: useHomeReleaseDates
+        ? undefined
+        : primaryReleaseDateLte,
+      primaryReleaseDateGte: useHomeReleaseDates
+        ? undefined
+        : primaryReleaseDateGte,
+      releaseDateLte: useHomeReleaseDates ? primaryReleaseDateLte : undefined,
+      releaseDateGte: useHomeReleaseDates ? primaryReleaseDateGte : undefined,
+      withReleaseType: useHomeReleaseDates ? '4|5' : undefined,
       keywords,
       excludeKeywords,
       withRuntimeGte: query.withRuntimeGte,
@@ -385,18 +395,17 @@ discoverRoutes.get('/tv', async (req, res, next) => {
     const query = ApiQuerySchema.parse(req.query);
     const keywords = query.keywords;
     const excludeKeywords = query.excludeKeywords;
+    const firstAirDateLte = formatDateString(query.firstAirDateLte);
+    const firstAirDateGte = formatDateString(query.firstAirDateGte);
+
     const data = await tmdb.getDiscoverTv({
       page: Number(query.page),
       sortBy: query.sortBy as SortOptions,
       language: req.locale ?? query.language,
       genre: query.genre,
       network: query.network ? Number(query.network) : undefined,
-      firstAirDateLte: query.firstAirDateLte
-        ? new Date(query.firstAirDateLte).toISOString().split('T')[0]
-        : undefined,
-      firstAirDateGte: query.firstAirDateGte
-        ? new Date(query.firstAirDateGte).toISOString().split('T')[0]
-        : undefined,
+      firstAirDateLte,
+      firstAirDateGte,
       originalLanguage: query.language,
       keywords,
       excludeKeywords,

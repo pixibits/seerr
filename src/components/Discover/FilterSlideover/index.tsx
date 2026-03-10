@@ -27,6 +27,7 @@ const messages = defineMessages('components.Discover.FilterSlideover', {
   activefilters:
     '{count, plural, one {# Active Filter} other {# Active Filters}}',
   releaseDate: 'Release Date',
+  releaseDateMode: 'Release Type',
   firstAirDate: 'First Air Date',
   from: 'From',
   to: 'To',
@@ -45,6 +46,8 @@ const messages = defineMessages('components.Discover.FilterSlideover', {
   voteCount: 'Number of votes between {minValue} and {maxValue}',
   status: 'Status',
   certification: 'Content Rating',
+  theatricalRelease: 'Theatrical Release',
+  homeRelease: 'Streaming / Blu-ray',
 });
 
 type FilterSlideoverProps = {
@@ -69,6 +72,7 @@ const FilterSlideover = ({
     type === 'movie' ? 'primaryReleaseDateGte' : 'firstAirDateGte';
   const dateLte =
     type === 'movie' ? 'primaryReleaseDateLte' : 'firstAirDateLte';
+  const movieReleaseMode = currentFilters.movieReleaseMode ?? 'theatrical';
 
   return (
     <SlideOver
@@ -86,6 +90,32 @@ const FilterSlideover = ({
               type === 'movie' ? messages.releaseDate : messages.firstAirDate
             )}
           </div>
+          {type === 'movie' && (
+            <div className="mb-4 flex flex-col">
+              <div className="mb-2">
+                {intl.formatMessage(messages.releaseDateMode)}
+              </div>
+              <select
+                id="movieReleaseMode"
+                data-testid="movie-release-mode-select"
+                className="rounded-md"
+                value={movieReleaseMode}
+                onChange={(e) => {
+                  updateQueryParams(
+                    'movieReleaseMode',
+                    e.target.value === 'theatrical' ? undefined : e.target.value
+                  );
+                }}
+              >
+                <option value="theatrical">
+                  {intl.formatMessage(messages.theatricalRelease)}
+                </option>
+                <option value="home">
+                  {intl.formatMessage(messages.homeRelease)}
+                </option>
+              </select>
+            </div>
+          )}
           <div className="relative z-40 flex space-x-2">
             <div className="flex flex-col">
               <div className="mb-2">{intl.formatMessage(messages.from)}</div>

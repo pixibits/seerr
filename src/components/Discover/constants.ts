@@ -94,6 +94,7 @@ export const QueryFilterOptions = z.object({
   sortBy: z.string().optional(),
   primaryReleaseDateGte: z.string().optional(),
   primaryReleaseDateLte: z.string().optional(),
+  movieReleaseMode: z.enum(['theatrical', 'home']).optional(),
   firstAirDateGte: z.string().optional(),
   firstAirDateLte: z.string().optional(),
   studio: z.string().optional(),
@@ -136,6 +137,10 @@ export const prepareFilterValues = (
 
   if (values.primaryReleaseDateLte) {
     filterValues.primaryReleaseDateLte = values.primaryReleaseDateLte;
+  }
+
+  if (values.movieReleaseMode) {
+    filterValues.movieReleaseMode = values.movieReleaseMode;
   }
 
   if (values.firstAirDateGte) {
@@ -233,19 +238,36 @@ export const countActiveFilters = (filterValues: FilterOptions): number => {
   let totalCount = 0;
   const clonedFilters = Object.assign({}, filterValues);
 
-  if (clonedFilters.voteAverageGte || filterValues.voteAverageLte) {
+  if (
+    clonedFilters.primaryReleaseDateGte ||
+    clonedFilters.primaryReleaseDateLte ||
+    clonedFilters.movieReleaseMode
+  ) {
+    totalCount += 1;
+    delete clonedFilters.primaryReleaseDateGte;
+    delete clonedFilters.primaryReleaseDateLte;
+    delete clonedFilters.movieReleaseMode;
+  }
+
+  if (clonedFilters.firstAirDateGte || clonedFilters.firstAirDateLte) {
+    totalCount += 1;
+    delete clonedFilters.firstAirDateGte;
+    delete clonedFilters.firstAirDateLte;
+  }
+
+  if (clonedFilters.voteAverageGte || clonedFilters.voteAverageLte) {
     totalCount += 1;
     delete clonedFilters.voteAverageGte;
     delete clonedFilters.voteAverageLte;
   }
 
-  if (clonedFilters.voteCountGte || filterValues.voteCountLte) {
+  if (clonedFilters.voteCountGte || clonedFilters.voteCountLte) {
     totalCount += 1;
     delete clonedFilters.voteCountGte;
     delete clonedFilters.voteCountLte;
   }
 
-  if (clonedFilters.withRuntimeGte || filterValues.withRuntimeLte) {
+  if (clonedFilters.withRuntimeGte || clonedFilters.withRuntimeLte) {
     totalCount += 1;
     delete clonedFilters.withRuntimeGte;
     delete clonedFilters.withRuntimeLte;
