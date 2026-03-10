@@ -3,19 +3,16 @@ import Header from '@app/components/Common/Header';
 import ListView from '@app/components/Common/ListView';
 import PageTitle from '@app/components/Common/PageTitle';
 import type { FilterOptions } from '@app/components/Discover/constants';
-import {
-  countActiveFilters,
-  prepareFilterValues,
-} from '@app/components/Discover/constants';
+import { countActiveFilters } from '@app/components/Discover/constants';
 import FilterSlideover from '@app/components/Discover/FilterSlideover';
 import useDiscover from '@app/hooks/useDiscover';
+import usePersistedDiscoverFilters from '@app/hooks/usePersistedDiscoverFilters';
 import { useUpdateQueryParams } from '@app/hooks/useUpdateQueryParams';
 import Error from '@app/pages/_error';
 import defineMessages from '@app/utils/defineMessages';
 import { BarsArrowDownIcon, FunnelIcon } from '@heroicons/react/24/solid';
 import type { SortOptions as TMDBSortOptions } from '@server/api/themoviedb';
 import type { MovieResult } from '@server/models/Search';
-import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useIntl } from 'react-intl';
 
@@ -46,10 +43,8 @@ const SortOptions: Record<string, TMDBSortOptions> = {
 
 const DiscoverMovies = () => {
   const intl = useIntl();
-  const router = useRouter();
   const updateQueryParams = useUpdateQueryParams({});
-
-  const preparedFilters = prepareFilterValues(router.query);
+  const { preparedFilters, isRestored } = usePersistedDiscoverFilters('movie');
 
   const {
     isLoadingInitialData,
@@ -61,7 +56,8 @@ const DiscoverMovies = () => {
     error,
   } = useDiscover<MovieResult, unknown, FilterOptions>(
     '/api/v1/discover/movies',
-    preparedFilters
+    preparedFilters,
+    { enabled: isRestored }
   );
   const [showFilters, setShowFilters] = useState(false);
 

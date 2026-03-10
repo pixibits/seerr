@@ -54,7 +54,7 @@ const useDiscover = <
 >(
   endpoint: string,
   options?: O,
-  { hideAvailable = true, hideBlocklisted = true } = {}
+  { hideAvailable = true, hideBlocklisted = true, enabled = true } = {}
 ): DiscoverResult<T, S> => {
   const settings = useSettings();
   const { hasPermission } = useUser();
@@ -62,6 +62,10 @@ const useDiscover = <
     BaseSearchResult<T> & S
   >(
     (pageIndex: number, previousPageData) => {
+      if (!enabled) {
+        return null;
+      }
+
       if (previousPageData && pageIndex + 1 > previousPageData.totalPages) {
         return null;
       }
@@ -90,13 +94,14 @@ const useDiscover = <
 
   const resultIds: Set<number> = new Set<number>();
 
-  const isLoadingInitialData = !data && !error;
+  const isLoadingInitialData = !enabled || (!data && !error);
   const isLoadingMore =
-    isLoadingInitialData ||
-    (size > 0 &&
-      !!data &&
-      typeof data[size - 1] === 'undefined' &&
-      isValidating);
+    enabled &&
+    (isLoadingInitialData ||
+      (size > 0 &&
+        !!data &&
+        typeof data[size - 1] === 'undefined' &&
+        isValidating));
 
   const fetchMore = () => {
     setSize(size + 1);
@@ -136,12 +141,13 @@ const useDiscover = <
     );
   }
 
-  const isEmpty = !isLoadingInitialData && titles?.length === 0;
+  const isEmpty = enabled && !isLoadingInitialData && titles?.length === 0;
   const isReachingEnd =
-    isEmpty ||
-    (!!data && (data[data?.length - 1]?.results.length ?? 0) < 20) ||
-    (!!data && (data[data?.length - 1]?.totalResults ?? 0) <= size * 20) ||
-    (!!data && (data[data?.length - 1]?.totalResults ?? 0) < 41);
+    enabled &&
+    (isEmpty ||
+      (!!data && (data[data?.length - 1]?.results.length ?? 0) < 20) ||
+      (!!data && (data[data?.length - 1]?.totalResults ?? 0) <= size * 20) ||
+      (!!data && (data[data?.length - 1]?.totalResults ?? 0) < 41));
 
   return {
     isLoadingInitialData,

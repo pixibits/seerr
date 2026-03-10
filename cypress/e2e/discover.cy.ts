@@ -50,6 +50,50 @@ describe('Discover', () => {
       .should('include', 'movieReleaseMode=home');
   });
 
+  it('restores saved movie discover filters and sort', () => {
+    cy.intercept('GET', '/api/v1/discover/movies?page=1*').as(
+      'getSavedMovieFilters'
+    );
+    cy.visit('/discover/movies', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'discover-movie-settings',
+          JSON.stringify({
+            genre: '18',
+            sortBy: 'vote_average.desc',
+          })
+        );
+      },
+    });
+
+    cy.wait('@getSavedMovieFilters').then(({ request }) => {
+      expect(request.url).to.include('genre=18');
+      expect(request.url).to.include('sortBy=vote_average.desc');
+    });
+  });
+
+  it('prefers discover movie URL params over saved state', () => {
+    cy.intercept('GET', '/api/v1/discover/movies?page=1*').as(
+      'getMovieUrlFilters'
+    );
+    cy.visit('/discover/movies?genre=35', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'discover-movie-settings',
+          JSON.stringify({
+            genre: '18',
+            sortBy: 'vote_average.desc',
+          })
+        );
+      },
+    });
+
+    cy.wait('@getMovieUrlFilters').then(({ request }) => {
+      expect(request.url).to.include('genre=35');
+      expect(request.url).not.to.include('genre=18');
+    });
+  });
+
   it('loads upcoming movies', () => {
     cy.intercept('/api/v1/discover/movies?page=1&primaryReleaseDateGte*').as(
       'getUpcomingMovies'
@@ -73,6 +117,26 @@ describe('Discover', () => {
 
     cy.contains('button', '0 Active Filters').click();
     cy.get('[data-testid=movie-release-mode-select]').should('not.exist');
+  });
+
+  it('restores saved series discover filters and sort', () => {
+    cy.intercept('GET', '/api/v1/discover/tv?page=1*').as('getSavedTvFilters');
+    cy.visit('/discover/tv', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'discover-tv-settings',
+          JSON.stringify({
+            genre: '18',
+            sortBy: 'vote_average.desc',
+          })
+        );
+      },
+    });
+
+    cy.wait('@getSavedTvFilters').then(({ request }) => {
+      expect(request.url).to.include('genre=18');
+      expect(request.url).to.include('sortBy=vote_average.desc');
+    });
   });
 
   it('loads upcoming series', () => {
