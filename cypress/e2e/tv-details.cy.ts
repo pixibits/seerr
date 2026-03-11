@@ -25,4 +25,54 @@ describe('TV Details', () => {
 
     cy.contains('Chapter Nine').should('be.visible');
   });
+
+  it('shows streaming providers and a future premiere warning in the request modal', () => {
+    cy.loginAsAdmin();
+
+    cy.intercept('GET', '/api/v1/tv/66732', (req) => {
+      req.continue((res) => {
+        res.body = {
+          ...res.body,
+          firstAirDate: '2026-05-10',
+          watchProviders: [
+            {
+              iso_3166_1: 'US',
+              flatrate: [
+                {
+                  id: 8,
+                  name: 'Netflix',
+                  logoPath: '/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg',
+                  displayPriority: 1,
+                },
+                {
+                  id: 15,
+                  name: 'Hulu',
+                  logoPath: '/pqUTCleNUiTLAVlelGxUgWn1ELh.jpg',
+                  displayPriority: 2,
+                },
+              ],
+            },
+          ],
+        };
+      });
+    }).as('tvDetails');
+
+    cy.visit('/tv/66732');
+    cy.wait('@tvDetails');
+
+    cy.contains('button', 'Request').click();
+    cy.wait('@tvDetails');
+
+    cy.contains('[data-testid=modal-title]', 'Request Series').should(
+      'be.visible'
+    );
+    cy.get('[data-testid=request-modal-release-warning]').should(
+      'contain',
+      'May 10, 2026'
+    );
+    cy.get('[data-testid=request-modal-streaming-providers] img').should(
+      'have.length',
+      2
+    );
+  });
 });

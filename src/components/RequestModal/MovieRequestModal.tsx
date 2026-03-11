@@ -3,6 +3,7 @@ import Modal from '@app/components/Common/Modal';
 import type { RequestOverrides } from '@app/components/RequestModal/AdvancedRequester';
 import AdvancedRequester from '@app/components/RequestModal/AdvancedRequester';
 import QuotaDisplay from '@app/components/RequestModal/QuotaDisplay';
+import RequestModalMediaInfo from '@app/components/RequestModal/RequestModalMediaInfo';
 import { useUser } from '@app/hooks/useUser';
 import globalMessages from '@app/i18n/globalMessages';
 import defineMessages from '@app/utils/defineMessages';
@@ -279,6 +280,7 @@ const MovieRequestModal = ({
         cancelText={intl.formatMessage(globalMessages.close)}
         backdrop={`https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/${data?.backdropPath}`}
       >
+        <RequestModalMediaInfo mediaType="movie" data={data} />
         {isOwner
           ? intl.formatMessage(messages.pendingapproval)
           : intl.formatMessage(messages.requestfrom, {
@@ -335,6 +337,7 @@ const MovieRequestModal = ({
       okButtonType={'primary'}
       backdrop={`https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/${data?.backdropPath}`}
     >
+      <RequestModalMediaInfo mediaType="movie" data={data} />
       {hasAutoApprove && !quota?.movie.restricted && (
         <div className="mt-6">
           <Alert
